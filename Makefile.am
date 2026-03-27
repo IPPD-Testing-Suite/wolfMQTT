@@ -59,6 +59,7 @@ DISTCLEANFILES+= wolfmqtt-config
 
 clean-local:
 	-rm -rf tests/fuzz/corpus
+	-rm -rf tests/fuzz/vuln_seeds
 
 maintainer-clean-local:
 	-rm Makefile.in

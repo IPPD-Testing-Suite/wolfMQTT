@@ -1,5 +1,5 @@
 #!/bin/bash
-# fuzz.sh - Build and run the wolfMQTT broker fuzzer
+# fuzz.sh - Build and run the wolfMQTT packet decoder fuzzer
 #
 # Usage: ./scripts/fuzz.sh [seconds]
 #   seconds: fuzz duration (default: 60)
@@ -33,7 +33,8 @@ CC=clang ./configure --enable-broker --enable-v5 --enable-fuzz \
 
 make -j$(nproc)
 
-# Generate seed corpus
+# Generate seed corpora
+python3 tests/fuzz/gen_vuln_seeds.py
 python3 tests/fuzz/gen_corpus.py
 
 # Run fuzzer
@@ -41,8 +42,8 @@ echo "Fuzzing for ${FUZZ_TIME} seconds..."
 export ASAN_OPTIONS="detect_leaks=1:abort_on_error=1:symbolize=1"
 
 timeout "$FUZZ_TIME" \
-    ./tests/fuzz/broker_fuzz \
-        tests/fuzz/corpus/ \
+    ./tests/fuzz/packet_decode_fuzz \
+        tests/fuzz/vuln_seeds/ tests/fuzz/corpus/ \
         -dict=tests/fuzz/mqtt.dict \
         -max_len=4096 \
         -timeout=10 \
@@ -50,7 +51,6 @@ timeout "$FUZZ_TIME" \
         -print_final_stats=1 \
     || FUZZ_RC=$?
 
-# timeout returns 124 on normal expiry, fuzzer returns 0 on no crash
 if [ "${FUZZ_RC:-0}" -eq 124 ] || [ "${FUZZ_RC:-0}" -eq 0 ]; then
     echo "Fuzzer completed without crashes"
 else

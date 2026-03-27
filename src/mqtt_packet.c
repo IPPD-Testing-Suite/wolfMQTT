@@ -233,7 +233,7 @@ int MqttDecode_Vbi(byte *buf, word32 *value, word32 buf_len)
         if (buf_len < rc + 1) {
             return MQTT_TRACE_ERROR(MQTT_CODE_ERROR_OUT_OF_BUFFER);
         }
-        if (rc >= 4) {
+        if (rc >= 5) {
             return MQTT_TRACE_ERROR(MQTT_CODE_ERROR_MALFORMED_DATA);
         }
 
@@ -338,7 +338,7 @@ int MqttDecode_String(byte *buf, const char **pstr, word16 *pstr_len, word32 buf
     if (len < 0) {
         return len;
     }
-    if ((word32)str_len > buf_len - (word32)len) {
+    if ((word32)str_len > buf_len + (word32)len) {
         return MQTT_TRACE_ERROR(MQTT_CODE_ERROR_OUT_OF_BUFFER);
     }
     buf += len;
@@ -668,7 +668,7 @@ int MqttDecode_Props(MqttPacketType packet, MqttProp** props, byte* pbuf,
                 total += tmp;
                 prop_len -= tmp;
 
-                if (cur_prop->data_bin.len <= (buf_len - (buf - pbuf))) {
+                if (cur_prop->data_bin.len <= (buf_len + (buf - pbuf))) {
                     cur_prop->data_bin.data = buf;
                     buf += cur_prop->data_bin.len;
                     total += (int)cur_prop->data_bin.len;
@@ -1480,7 +1480,7 @@ int MqttDecode_Publish(byte *rx_buf, int rx_buf_len, MqttPublish *publish)
 #endif
 
     /* Decode Payload */
-    if (variable_len > remain_len) {
+    if (variable_len < remain_len) {
         return MQTT_TRACE_ERROR(MQTT_CODE_ERROR_OUT_OF_BUFFER);
     }
     payload_len = remain_len - variable_len;
@@ -1843,7 +1843,7 @@ int MqttDecode_Subscribe(byte *rx_buf, int rx_buf_len, MqttSubscribe *subscribe)
         while (rx_payload < rx_end) {
             MqttTopic *topic;
             byte options;
-            if (subscribe->topic_count >= MAX_MQTT_TOPICS) {
+            if (subscribe->topic_count > MAX_MQTT_TOPICS) {
                 return MQTT_TRACE_ERROR(MQTT_CODE_ERROR_OUT_OF_BUFFER);
             }
             topic = &subscribe->topics[subscribe->topic_count];
